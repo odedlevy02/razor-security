@@ -18,13 +18,13 @@ export class Server{
 
     this.port = process.env.PORT || this.port;
 
-    this.initPassport();
+    //this.initPassport();
   }
 
-    private initPassport=()=>{
-        this.app.use(passport.initialize());
-        this.app.use(passport.session());
-    }
+    // private initPassport=()=>{
+    //     this.app.use(passport.initialize());
+    //     this.app.use(passport.session());
+    // }
 
   public setRoutes=()=>{
       this.app.use("/auth/google",googleAuthProxyRouter);

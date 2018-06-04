@@ -1,8 +1,9 @@
 import {socialKeys} from "../config/socialKeys";
 import {UserManager} from "../managers/userManager";
-import { BaseLocalAuth } from "razor-security";
+import { BaseLocalAuthRoute } from "razor-security";
 
-export class LocalAuth extends BaseLocalAuth{
+
+export class LocalAuth extends BaseLocalAuthRoute{
     constructor(){
         super(socialKeys.local,new UserManager(socialKeys.local.userNameField))
     }

@@ -1,0 +1,14 @@
+{
+  "name": "razor-security",
+  "version": "0.0.1",
+  "scripts": {
+    "build":"npm run build:server:authdal && npm run build:server:authhost && npm run build:server:authservice && npm run build:server:razorsecurity && npm run build:client",
+    "build:server:authdal":"cd ./servers/authDal && npm run build",
+    "build:server:authhost":"cd ./servers/authHost && npm run build",
+    "build:server:authservice":"cd ./servers/authService && npm run build",
+    "build:server:razorsecurity":"cd ./servers/razorSecurity && npm run build",
+    "build:client":"cd ./client/authClient && npm run build",
+    "publish":"cd ./servers/razorSecurity && npm publish"
+
+  }
+}

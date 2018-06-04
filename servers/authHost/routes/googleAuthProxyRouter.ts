@@ -31,15 +31,15 @@ class GoogleAuthProxyRouter {
         request
             .get(callbackUrl)
             .then(async (response) =>{
-                if(response.body.loginResult && response.body.loginResult.isValid==false) {
-                    res.redirect("/#login#error=" + response.body.loginResult.error);
+                if(response.body.loginResult && response.body.isValid==false) {
+                    res.redirect("/#login?error=" + response.body.error);
                 }else{
-                    // let authManager = this.getAuthManager();
-                    // let token = await authManager.createToken(response.body.user.id,response.body.user.roleId)
-                    let userInfo = JSON.stringify(response.body.loginResult.userInfo)
-                    res.redirect(`/#login?access_token=${response.body.loginResult.tokenRes.token};expiry=3300303;userInfo=${userInfo}`);
+                    let userInfo = JSON.stringify(response.body.userInfo)
+                    res.redirect(`/#login?access_token=${response.body.tokenRes.token};userInfo=${userInfo}`);
                 }
 
+            }).catch(err=>{
+                res.redirect(res.redirect(`/#login#error=${err.message}`));
             });
     }
 

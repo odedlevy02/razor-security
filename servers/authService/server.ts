@@ -11,7 +11,7 @@ import {localAuthRouter} from "./routes/localAuth";
 
 export class Server {
     private app: express.Express;
-    private port: any = 8888;
+    private port: any = 3000;
 
     constructor() {
         this.app = express();

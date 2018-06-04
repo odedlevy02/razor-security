@@ -5,7 +5,7 @@ import * as localStratagy from "passport-local"
 import {GoogleKeys, LocalKeys} from "../dataModels/ISocialKeys";
 import {IUserManager} from "../dataModels/IUserManager";
 
-export class BaseLocalAuth {
+export class BaseLocalAuthRoute {
 
     router: Router;
     constructor(private localKeys:LocalKeys,private userManager:IUserManager) {
@@ -31,7 +31,7 @@ export class BaseLocalAuth {
             },
             async (user, password, done) => {
                 let loginResult = await this.userManager.loginLocal(user,password)
-                return done(null,{loginResult})
+                return done(null,loginResult)
 
             }))
 

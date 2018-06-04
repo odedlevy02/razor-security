@@ -5,9 +5,10 @@ import * as googleStratagy from "passport-google-oauth20";
 import {GoogleKeys} from "../dataModels/ISocialKeys";
 import {IUserManager} from "../dataModels/IUserManager";
 import {ILoginResult} from "../dataModels/ILoginResult";
-import {IBaseSocialAuth} from "../dataModels/IBaseSocialAuth";
+import {IBaseSocialAuthRoute} from "../dataModels/IBaseSocialAuthRoute";
 
-export abstract class BaseGoogleAuth implements IBaseSocialAuth{
+
+export abstract class BaseGoogleAuthRoute implements IBaseSocialAuthRoute{
 
     router: Router;
     provider:string="google"
@@ -20,7 +21,7 @@ export abstract class BaseGoogleAuth implements IBaseSocialAuth{
 
     private createRoutes() {
         this.router.get("/", passport.authenticate(this.provider,<any>{ scope: this.googleKeys.scope}));
-        this.router.get("/callback", passport.authenticate(this.provider, {failureRedirect: '/'}),
+        this.router.get("/callback", passport.authenticate(this.provider, {session:false}),
             function(req:any, res) {
                 res.json(req.user);
             });
@@ -41,7 +42,7 @@ export abstract class BaseGoogleAuth implements IBaseSocialAuth{
                 if(profile && profile.emails && profile.emails.length > 0){
                     let email = profile.emails[0].value
                     let loginResult =await this.userManager.loginSocial("google",email,profile,this.getSocialUserRole(this.provider,profile))
-                    cb(null,{loginResult})
+                    cb(null,loginResult)
                 }else{
                     cb(null,<ILoginResult>{isValid:false,error:"social api did not return any email for user"})
                 }
