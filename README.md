@@ -26,6 +26,8 @@ I highly recomend using the [rznode](https://www.npmjs.com/package/generator-rzn
 
 As a prerequisite start off by creating a Node host service with Express, and a loopback dal service exposing a user table with at email (mandatory) and password (non mandatory) fields
 
+> Note - make sure to register you app in each social provider and collect the relenvat keys. For details read [this](https://www.djamware.com/post/59a6257180aca768e4d2b132/node-express-passport-facebook-twitter-google-github-login)
+
 1. Create a new Node service for containing the security logic
 2. npm install passport razor-security --save
 2. Add routes per each provider (including local) and an additional route for the UserManagement
