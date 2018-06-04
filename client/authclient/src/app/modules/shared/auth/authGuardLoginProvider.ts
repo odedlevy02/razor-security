@@ -27,10 +27,10 @@ export class AuthGuardLoginProvider implements CanActivate {
 
   private getParsedQueryString = () => {
     const pathFragments = this.location.path(true);
-    return this.parseQueryString2(pathFragments);
+    return this.parseQueryString(pathFragments);
   }
 
-  parseQueryString2 = (queryString) => {
+  parseQueryString = (queryString) => {
     const params = {};
     //remove path until ?
     let startFrom = queryString.indexOf("?")
