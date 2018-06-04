@@ -1,0 +1,11 @@
+node_modules
+*.js
+*.orig
+*.js.map
+*.log
+.idea
+.idea/*
+dist
+*.tgz
+*.log
+

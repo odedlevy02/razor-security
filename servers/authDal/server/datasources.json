@@ -1,0 +1,12 @@
+{
+  "authDal": {
+    "host": "localhost",
+    "port": 3306,
+    "url": "",
+    "database": "authdb",
+    "password": "root",
+    "name": "authDal",
+    "user": "root",
+    "connector": "mysql"
+  }
+}
