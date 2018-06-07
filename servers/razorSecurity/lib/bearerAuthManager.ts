@@ -8,6 +8,13 @@ import {IAauthenticationResult} from "./dataModels/IAauthenticationResult";
 
 export class BearerAuthManager {
 
+    constructor(){
+
+        if(!process.env.jwt_token_secret){
+            throw new Error("Env key 'jwt_token_secret' is mandatory and has not been set. Validate to load env variables before importing BearerAuthManager")
+        }
+    }
+
     public createToken = (data: any, expires: string): string => {
         return this.createTokenWithExpire(data, expires);
     }

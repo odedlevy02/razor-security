@@ -44,17 +44,41 @@ a UserManager class and extend it with BaseUserManager abstract class. You will 
     1. getUserDataForDisplay(dbUser:any):any - the input is a user from the db. The return value is an object containing user information you want to send
     to the client (e.g. for displaying 'hello Jhon')
     2. getUserDataForToken(dbUser:any):any - same input as previous method. The result is an object that is going to be encryted inside the auth token. The data can later on be deserialized in each user request.
-- googleAuthRoute (or any other provider) - Add a class and extend BaseGoogleAuthRoute. The constructer requires 2 params:
-    1. An object of type 'GoogleKeys' containg all the keys required for Google passport provider.
-    2. An instance of UserManager defined in previous section. Note the in the UserManager constructer you are required to supply the 
-    key defined in your database for a unique user (e.g. email or phone number etc)
-    3. then export you classes router : export const googleAuthRouter= new GoogleAuthRoute().router;
-- localAuthRoute - Add a class extending the BaseLocalAuthRoute The constructer requires 2 params:
-    1. An object of type 'LocalKeys' containg the keys required for Local passport provider.
-    2. An instance of UserManager defined in previous section. Note the in the UserManager constructer you are required to supply the 
-    key defined in your database for a unique user (e.g. email or phone number etc)
-    3. then export you classes router : export const localAuthRouter= new LocalAuthRoute().router;
+- googleAuthRoute (or any other provider) - Add a class and extend BaseGoogleAuthRoute. 
+    1. Add a constructor and inside initialize the super class with 2 parameters
+        1. An object of type 'GoogleKeys' containg all the keys required for Google passport provider.
+        2. An instance of UserManager defined in previous section. Note the in the UserManager constructer you are required to supply the
+            key defined in your database for a unique user (e.g. email or phone number etc)
+        ````js
+         constructor(){
+                super(googleKeys,new UserManager("email"))
+            }
+        ```` 
+    
+    2. then export you classes router :
+    ````js 
+    export const googleAuthRouter= new GoogleAuthRoute().router;
+    ````
+- localAuthRoute - Add a class extending the BaseLocalAuthRoute 
+    1. Add a constructor and inside initialize the super class with 2 parameters
+        1. An object of type 'LocalKeys' containg the keys required for Local passport provider.
+        2. An instance of UserManager defined in previous section. Note the in the UserManager constructer you are required to supply the 
+            key defined in your database for a unique user (e.g. email or phone number etc)
+        ````js
+         constructor(){
+                super(localKeys,new UserManager("email"))
+            }
+        ```` 
+    2. then export you classes router : 
+    ````js
+    export const localAuthRouter= new LocalAuthRoute().router;
+    ````
 - userManagerRoute - Add a class extending BaseUserManagerRouter. The constructer expects and instance the UserManager class
+then export your class router:
+3. then export you classes router :
+    ````js 
+    export const userManagerRouter= new UserManagerRoute().router;
+    ````
 
 Configure existing classes:
 
@@ -132,7 +156,7 @@ class GoogleAuthProxyRouter {
 }
 
 export const googleAuthProxyRouter = new GoogleAuthProxyRouter().router;
-//Note - add to server.ts method setRoutes:  this.app.use("/googleAuthProxy",googleAuthProxyRouter);
+//Note - add to server.ts method setRoutes:  this.app.use("/auth/google",googleAuthProxyRouter);
 
 ````
 
@@ -192,7 +216,7 @@ The remaining code modification is to set the routes in server.ts.
 
 ### Client Side code
 In order to except the results I added a Login AuthGuard class extending the CanActivate. This should encapsulate the logic required to handle the servers response in case of a redirect.
-Here is the code:
+Here is the code:   
 ````js
 import {Injectable} from "@angular/core";
 import {ActivatedRoute, CanActivate, Router} from "@angular/router";
@@ -255,10 +279,218 @@ const loginRoutes: Routes = [
 ````
 >Note there is a lot of work done to parse the result since none of the regular Angular options work when at the end we want to redirect to a different page
 
+### Client side routes to Social login
+In the client side when requested to route to the relevant social provider, inside the relevent on 
+click method use window.redirect in order to redirect to the host
+````js
+signInWithGoogle=()=>{
+    location.href="/auth/google"; //this is the path we defined in the server to map to google
+  }
+````
 
 ### Advanced features
 For those that do not want to use loopback  or if you prefer to override the UserManagemnt logic instead of extending the UserManager class from 
 BaseUserManager it is possible to implement the IUserManager interface and implement the required methods. It is also possible to override specific methods if required.
+
+### Additional Security Concerns - Issues to complete the picture
+
+Having the ability to use social log in is an important part of the security processm but to complete
+the entire picture there are several other steps that are required including:
+
+1. Intercepting client side http request and adding authorization header to each call. In addition it needs
+    to handle cases in which the token expires
+2. Server side middleware for receiving client side calls and authenticating them   
+3. Role managment on both the server and client. It is important to have the server protected per user role, while on
+the client mainly to hide non relevant features, though if the data is protected on the server side then 
+at worst the client will see empty pages
+
+#### Client side interception
+
+In Angular it is easy to intercept http calls.You are required to create a class that extends 
+'HttpInterceptor' and then to register it.
+Here is a code sample of the my implemntation. Note that I use an iternal class for saving and fetching the 
+client token from the local storage
+
+````js
+import {Injectable} from '@angular/core';
+import {
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpInterceptor, HttpErrorResponse, HttpResponse
+} from '@angular/common/http';
+
+import {Observable} from 'rxjs/Observable';
+import {Router} from '@angular/router';
+import {AppCacheProvider} from "../providers/app-cache-provider";
+
+@Injectable()
+export class TokenInterceptor implements HttpInterceptor {
+
+  constructor(private cacheProvider: AppCacheProvider,
+              private router: Router) {
+  }
+
+  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+
+    if (this.cacheProvider) {
+      const token = this.cacheProvider.getToken();
+      let authString = '';
+      if (token) {
+        authString = 'Bearer ' + token;
+        request = request.clone({headers: request.headers.set('Authorization', `${authString}`)});
+      }
+    }
+    return next.handle(request).do((event: HttpEvent<any>) => {
+      if (event instanceof HttpResponse) {
+        // do stuff with response if you want
+      }
+    }, (err: any) => {
+      if (err instanceof HttpErrorResponse) {
+        if (err.status === 401 || err.status === 403) {
+          //key expired - clear token and navigate to login
+          this.cacheProvider.clearLocalStorage()
+          this.router.navigate(['/login']);
+          return Observable.empty();
+        } else {
+          return Observable.throw(err);
+        }
+      }
+    });
+  }
+}
+
+````
+
+In addition you need to register the class in the main module :
+````js
+{provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true}
+````
+
+#### Server Side Middleware
+
+Once the clinet sends the authorization header we need to add a middleware class that will
+validate the token and authorize the call
+
+The middleware will need to take the token and decode it. This logic is implemented inside the 
+razor-security package in class 'BearerAuthManager' by calling method 'authenticateCall' 
+the result type is : {isAuthorized:boolaean,decodedToken:any}
+
+>Note the decoded data is the same data that had been inserted in UserManager.getUserDataForToken right after user info has been retrieved from the db
+
+Since this class is hosted on a different service then that of the host service you will need to add an api to your security 
+microseervice. Here is a code sample:
+
+````js
+/**
+ * Created by ben.m on 29/12/16.
+ */
+import {Router} from "express-serve-static-core";
+import * as express from "express";
+import {BearerAuthManager} from "razor-security"
+import {IAauthenticationResult} from "razor-security";
+
+
+class AuthApi  {
+
+    private _checkModulePermissions:string = "/checkModulePermissions";
+
+    protected _router:Router;
+
+
+    public getRouter(){
+        return this._router;
+    }
+    private bearerAuthManager:BearerAuthManager;
+    constructor( ){
+        this._router = express.Router();
+        this.configRoutes();
+        this.bearerAuthManager = new BearerAuthManager();
+    }
+
+    protected configRoutes():void{
+        this._router.post("/authenticate",this.authenticateCall)
+         //this._router.post("/getUserDetailsFromToken",this.getUserDetailsFromToken);
+    }
+
+    private authenticateCall = (req, res,next)  => {
+        this.bearerAuthManager.authenticateCall(req.body).then((result:IAauthenticationResult) =>{
+            res.json(result);
+        }).catch(err => {
+            next(err);
+        })
+
+    }
+
+}
+
+export const authRoute=new AuthApi().getRouter()
+
+
+````
+
+ This is my implementation of the AuthenticationMiddleware class, internaly calling the security service:
+ 
+ ````js
+ import * as request from "superagent";
+ 
+ export class AuthenticationMiddleware {
+ 
+     constructor(private permittedRoles:any[]=null){
+ 
+     }
+ 
+     authenticateCall = (req, res, next) => {
+         const url = `${process.env.SEC_AUTH_URL}/auth/authenticate`;
+         request
+             .post(url)
+             .send(req.headers)
+             .end((err, authRes) => {
+                 if (err) {
+                     res.sendStatus(401, err);
+                 } else {
+                     if (authRes && authRes.body && authRes.body.isAuthorized) {
+                         //if token authorized - validate if required to role authorize
+                         if(this.permittedRoles){
+                             //extract role id
+                             if(authRes.body.decodedToken && authRes.body.decodedToken.roleId){
+                                 const userRoleId =authRes.body.decodedToken.roleId;
+                                 if(this.permittedRoles.includes(userRoleId)){
+                                     req.token = authRes.body.token;
+                                     req.decodedToken = authRes.body.decodedToken;
+                                     next();
+                                 }else{
+                                     res.sendStatus(401, new Error("User does not have role privileges for this module"));
+                                 }
+                             }
+                         }else{
+                             req.token = authRes.body.token;
+                             req.decodedToken = authRes.body.decodedToken;
+                             next();
+                         }
+ 
+                     }
+                     else {
+                         res.sendStatus(401, err);
+                     }
+                 }
+             });
+     };
+ 
+ }
+ 
+ //export const authMiddleware = new AuthenticationMiddleware().authenticateCall
+
+ ````
+ > Note that the constructer can recieve a list of role ids. This will enable to add per role authentication 
+ for specific api calls. If no role id is sent then the api will be open to anyone carying a valid token
+ 
+ Now add the middleware to the api route defintion.
+ ````js
+ this.app.use("/documents",new AuthenticationMiddleware([1,2]).authenticateCall,documentsRouter);
+ ````
+ 
+ Not simple but this about wraps it up for now
 
   
      

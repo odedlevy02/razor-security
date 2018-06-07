@@ -9,8 +9,15 @@ export abstract class BaseUserManager implements IUserManager{
 
 
     constructor(private userNameField:string){
-
+        if(!process.env.USER_LOOPBACK_DAL){
+            throw new Error("Env variable 'USER_LOOPBACK_DAL' is mandatory. Define the url link to loopback user table")
+        }
     }
+
+    getDalUrl(){
+        return process.env.USER_LOOPBACK_DAL
+    }
+
     addUpdateUser = (userInfo: Partial<IUserInfo>): Promise<any> => {
         if (userInfo.id) {
             return this.updateUser(userInfo)
@@ -28,9 +35,9 @@ export abstract class BaseUserManager implements IUserManager{
             //compare password to hashed password
             var isSame = bcrypt.compareSync(oldPassword, user.password);
             if (isSame) {
-                let url = process.env.USER_LOOPBACK_DAL;
+
                 user.password = bcrypt.hashSync(newPassword)
-                return request.patch(url).send(user).then(res => res.body);
+                return request.patch(this.getDalUrl()).send(user).then(res => res.body);
 
             } else {
                 throw "email or password are not valid";
@@ -43,8 +50,7 @@ export abstract class BaseUserManager implements IUserManager{
         if(userInfo.password) {
             delete userInfo.password
         }
-        let url = process.env.USER_LOOPBACK_DAL;
-        return request.patch(url).send(userInfo).then(res => res.body);
+        return request.patch(this.getDalUrl()).send(userInfo).then(res => res.body);
 
     }
 
@@ -70,8 +76,7 @@ export abstract class BaseUserManager implements IUserManager{
     }
 
     private addUserToDb=(userInfo: Partial<IUserInfo>):Promise<any> =>{
-        let url = process.env.USER_LOOPBACK_DAL;
-        return request.post(url).send(userInfo).then(res => res.body);
+        return request.post(this.getDalUrl()).send(userInfo).then(res => res.body);
     }
 
     loginLocal = async (userNameVal: string, password): Promise<ILoginResult> => {
@@ -124,10 +129,9 @@ export abstract class BaseUserManager implements IUserManager{
     }
 
     private getUserByKey = (userNameVal: string): Promise<IUserInfo> => {
-        let url = process.env.USER_LOOPBACK_DAL
         let filter = {where: {}}
         filter.where[this.userNameField] = userNameVal
-        return request.get(url).send({filter}).then(res => {
+        return request.get(this.getDalUrl()).send({filter}).then(res => {
             let users = res.body;
             if (users.length > 0) {
                 return users[0];

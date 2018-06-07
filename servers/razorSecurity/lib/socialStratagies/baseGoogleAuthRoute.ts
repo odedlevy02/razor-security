@@ -29,7 +29,9 @@ export abstract class BaseGoogleAuthRoute implements IBaseSocialAuthRoute{
 
     private setGoogleStratagy=()=>{
         let GoogleStrategy = googleStratagy.Strategy;
-
+        if(!process.env.BASE_SOCIAL_CALLBACK){
+            throw new Error("Env key 'BASE_SOCIAL_CALLBACK' is mandatory and has not been set. Validate to load env variables before importing BaseGoogleAuthRoute")
+        }
         passport.use(new GoogleStrategy({
                 clientID: this.googleKeys.clientID,
                 clientSecret: this.googleKeys.clientSecret,
