@@ -1,41 +1,41 @@
-import {Router} from "express";
 import * as express from "express";
-import * as passport from "passport"
-import * as googleStratagy from "passport-google-oauth20";
-import {GoogleKeys} from "../dataModels/ISocialKeys";
+import {FacebookKeys} from "../dataModels/ISocialKeys";
 import {IUserManager} from "../dataModels/IUserManager";
+import {Router} from "express";
+import * as passport from "passport"
+import * as passportFacebook from "passport-facebook"
 import {ILoginResult} from "../dataModels/ILoginResult";
 import {IBaseSocialAuthRoute} from "../dataModels/IBaseSocialAuthRoute";
 
-
-export abstract class BaseGoogleAuthRoute implements IBaseSocialAuthRoute{
-
+export class BaseFacebookAuthRoute implements  IBaseSocialAuthRoute{
     router: Router;
-    provider:string="google"
-    constructor(private googleKeys:GoogleKeys,private userManager:IUserManager) {
+    provider:string="facebook"
+    constructor(private facebookKeys:FacebookKeys,private userManager:IUserManager) {
         this.router = express.Router();
-        this.setGoogleStratagy();
+        this.setFacebookStratagy();
         this.createRoutes();
 
     }
 
     private createRoutes() {
-        this.router.get("/", passport.authenticate(this.provider,<any>{ scope: this.googleKeys.scope}));
+        this.router.get("/", passport.authenticate(this.provider,{scope:"email"}));
         this.router.get("/callback", passport.authenticate(this.provider, {session:false}),
             function(req:any, res) {
                 res.json(req.user);
             });
     }
 
-    private setGoogleStratagy=()=>{
-        let GoogleStrategy = googleStratagy.Strategy;
+    private setFacebookStratagy=()=>{
+        let FacebookStrategy = passportFacebook.Strategy;
         if(!process.env.BASE_SOCIAL_CALLBACK){
             throw new Error("Env key 'BASE_SOCIAL_CALLBACK' is mandatory and has not been set. Validate to load env variables before importing BaseGoogleAuthRoute")
         }
-        passport.use(new GoogleStrategy({
-                clientID: this.googleKeys.clientID,
-                clientSecret: this.googleKeys.clientSecret,
-                callbackURL: `${process.env.BASE_SOCIAL_CALLBACK}${this.googleKeys.callbackURL}`,  //need to give full url of the host app otherwise passport will redirect to this server and not the host
+        let callBack = `${process.env.BASE_SOCIAL_CALLBACK}${this.facebookKeys.callbackURL}`
+        passport.use(new FacebookStrategy({
+                clientID: this.facebookKeys.clientID,
+                clientSecret: this.facebookKeys.clientSecret,
+                callbackURL: callBack,  //need to give full url of the host app otherwise passport will redirect to this server and not the host
+                profileFields: this.facebookKeys.scope,
                 passReqToCallback: true
             },
             async (req,accessToken, refreshToken, profile, cb)=>{
@@ -61,4 +61,3 @@ export abstract class BaseGoogleAuthRoute implements IBaseSocialAuthRoute{
     }
 
 }
-

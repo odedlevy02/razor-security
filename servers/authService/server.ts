@@ -7,6 +7,7 @@ import {googleAuthRouter} from "./routes/googleAuth";
 import * as passport from "passport"
 import {userManagerRouter} from "./routes/userManagerRouter";
 import {localAuthRouter} from "./routes/localAuth";
+import {facebookAuthRouter} from "./routes/faceBookAuthRoute";
 
 
 export class Server {
@@ -30,6 +31,7 @@ export class Server {
 
     public setRoutes = () => {
         this.app.use("/auth/google", googleAuthRouter);
+        this.app.use("/auth/facebook",facebookAuthRouter);
         this.app.use("/auth/local", localAuthRouter);
         this.app.use("/userManager",userManagerRouter);
     }

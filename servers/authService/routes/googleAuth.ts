@@ -7,8 +7,5 @@ export class GoogleAuth extends BaseGoogleAuthRoute{
         super(socialKeys.google,new UserManager(socialKeys.local.userNameField))
     }
 
-    getSocialUserRole(provider:string,profile:any): number {
-        return 2;
-    }
 }
 export const googleAuthRouter= new GoogleAuth().router;

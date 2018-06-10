@@ -7,6 +7,8 @@ import {HttpClient} from "@angular/common/http";
     <div>I am login</div>
     <button (click)="googleLogin()">Google login</button>
 
+    <button (click)="facebookLogin()">Facebook login</button>
+
     <button (click)="localLogin()">Local login</button>
   `
 })
@@ -20,6 +22,10 @@ export class LoginComp implements OnInit {
 
   googleLogin=()=>{
     location.href="/auth/google";
+  }
+
+  facebookLogin=()=>{
+    location.href="/auth/facebook";
   }
 
   localLogin=()=>{

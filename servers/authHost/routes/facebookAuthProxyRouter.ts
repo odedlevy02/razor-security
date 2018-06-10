@@ -2,8 +2,7 @@ import {Router} from "express";
 import * as express from "express";
 import * as request from "superagent";
 
-class GoogleAuthProxyRouter {
-
+export class FacebookAuthProxyRouter{
     router: Router;
 
     constructor() {
@@ -12,12 +11,12 @@ class GoogleAuthProxyRouter {
     }
 
     private createRoutes() {
-        this.router.get('/', this.googleLogin)
-        this.router.get('/callback', this.googleCallBack)
+        this.router.get('/', this.facebookLogin)
+        this.router.get('/callback', this.facebookCallBack)
     }
 
-    private googleLogin = (req, res, next) => {
-        let loginUrl = process.env.AUTH_SERVICE + "/auth/google";
+    private facebookLogin = (req, res, next) => {
+        let loginUrl = process.env.AUTH_SERVICE + "/auth/facebook";
         request.get(loginUrl )
             .then((response) =>{
                 res.redirect((response as any).redirects[0]);
@@ -26,7 +25,7 @@ class GoogleAuthProxyRouter {
             });
     }
 
-    private googleCallBack = async (req, res) => {
+    private facebookCallBack = async (req, res) => {
         let callbackUrl = process.env.AUTH_SERVICE + req.originalUrl;
         request
             .get(callbackUrl)
@@ -39,12 +38,9 @@ class GoogleAuthProxyRouter {
                 }
 
             }).catch(err=>{
-                res.redirect(res.redirect(`/#login#error=${err.message}`));
-            });
+            res.redirect(res.redirect(`/#login#error=${err.message}`));
+        });
     }
-
-
 }
-
-export const googleAuthProxyRouter = new GoogleAuthProxyRouter().router;
-//Note - add to server.ts method setRoutes:  this.app.use("/auth/google",googleAuthProxyRouter);
+export const facebookAuthProxyRouter = new FacebookAuthProxyRouter().router;
+//Note - add to server.ts method setRoutes:  this.app.use("/auth/facebook",facebookAuthProxyRouter);

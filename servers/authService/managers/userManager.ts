@@ -10,4 +10,11 @@ export class UserManager extends BaseUserManager{
     getUserDataForToken(dbUser:any):any{
         return {userId:dbUser.id}
     }
+
+    fillUserInfoFromSocialLogin(socialProviderType:string,userIdentifierVal: string, profile: any):any{
+        let userInfo={}
+        userInfo["email"] = userIdentifierVal;
+        userInfo["role_id="] = 2 //all social logins
+        return userInfo;
+    }
 }

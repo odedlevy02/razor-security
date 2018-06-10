@@ -1,4 +1,5 @@
 export { BaseGoogleAuthRoute } from "./lib/socialStratagies/baseGoogleAuthRoute";
+export { BaseFacebookAuthRoute} from "./lib/socialStratagies/baseFacebookAuthRoute";
 export { BaseLocalAuthRoute } from "./lib/socialStratagies/baseLocalAuthRoute";
 export { BaseUserManager } from "./lib/userManager/baseUserManager";
 export { BaseUserManagerRouter } from "./lib/userManager/baseUserManagerRouter";
