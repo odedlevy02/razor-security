@@ -6,4 +6,6 @@ export interface IUserManager{
     changePassword (userNameVal: string, oldPassword: string, newPassword: string)
     loginLocal (userNameVal: string, password): Promise<ILoginResult> ,
     loginSocial (socialType:string,email: string, profile: any): Promise<ILoginResult>
+    fillUserInfoFromSocialLogin(socialProviderType:string,userIdentifierVal: string, profile: any):any;
+    createLoginResult(dbUser:any):ILoginResult;
 }

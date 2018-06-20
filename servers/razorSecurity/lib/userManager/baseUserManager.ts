@@ -106,7 +106,7 @@ export abstract class BaseUserManager implements IUserManager{
         }
     }
 
-    private createLoginResult=(dbUser:any):ILoginResult=>{
+    public createLoginResult=(dbUser:any):ILoginResult=>{
         let token = new BearerAuthManager().createToken(this.getUserDataForToken(dbUser), "10d")
         let userInfo = this.getUserDataForDisplay(dbUser);
         return {

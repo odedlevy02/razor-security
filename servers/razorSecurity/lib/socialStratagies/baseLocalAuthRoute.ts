@@ -15,11 +15,25 @@ export class BaseLocalAuthRoute {
     }
 
     private createRoutes() {
-        this.router.post("/", passport.authenticate('local',{ failureRedirect: '/' }), (req:any, res)=> {
-            //res.redirect("/login?access=22")
+        this.router.post("/", passport.authenticate('local',{ failureRedirect: '/' ,session:false}), (req:any, res)=> {
             res.json(req.user)
         });
 
+        this.router.post("/signup",this.signup);
+
+    }
+
+    signup=(req,res,next)=>{
+        let userIdentifier = req.body[this.localKeys.userNameField];
+        let details = req.body;
+        //try adding user. If exists an error will be raised
+        let userInfo = this.userManager.fillUserInfoFromSocialLogin("local",userIdentifier ,details)
+        this.userManager.addUpdateUser(userInfo).then(addUserRes=>{
+            let loginResult = this.userManager.createLoginResult(addUserRes)
+            res.status(200).send(loginResult);
+        },err=>{
+            res.status(500).send({isValid: false, error: "Failed to sign up. User already exists in the system"});
+        })
     }
 
 
