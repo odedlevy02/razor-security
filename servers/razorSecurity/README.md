@@ -33,21 +33,23 @@ As a prerequisite start off by creating a Node host service with Express, and a 
 2. Add routes per each provider (including local) and an additional route for the UserManagement
 3. Add a manager class for UserManager
 4. Add a config folder and inside a .env file. The env file needs to include the following keys:
-    1. jwt_token_secret - a secret string for creating the token
-    2. BASE_SOCIAL_CALLBACK - the route defined inside the providers and the permitted url
-    3. USER_LOOPBACK_DAL - the database loopback service url
+    1. jwt_token_secret - a secret string for creating the token (e.g 12345somesecretstring)
+    2. BASE_SOCIAL_CALLBACK - the route defined inside the providers and the permitted url (e.g. http://localhost:3000 )
+    3. USER_LOOPBACK_DAL - the database loopback service url (e.g. http://localhost:3001/api/user_test)
     
-Now lets fo into the details of the each required file
+Now lets go into the details of the each required file
 
 - UserManager - class for managing users including creating user, login, password encription and changing password. Create 
-a UserManager class and extend it with BaseUserManager abstract class. You will be required to implement 2 methods
+a UserManager class and extend it with BaseUserManager abstract class. You will be required to implement 3 methods
     1. getUserDataForDisplay(dbUser:any):any - the input is a user from the db. The return value is an object containing user information you want to send
     to the client (e.g. for displaying 'hello Jhon')
     2. getUserDataForToken(dbUser:any):any - same input as previous method. The result is an object that is going to be encryted inside the auth token. The data can later on be deserialized in each user request.
+    3. fillUserInfoFromSocialLogin(socialProviderType: string, userIdentifierVal: string, profile: any): any - This method will be called after succesfull login. 
+        It will contain the additional data that is recieved from the provider so that it can be used to save user data into db. The 'socialProviderType' key will contain the type of social provider that is being used (e.g. facebook, google or local)
 - googleAuthRoute (or any other provider) - Add a class and extend BaseGoogleAuthRoute. 
     1. Add a constructor and inside initialize the super class with 2 parameters
-        1. An object of type 'GoogleKeys' containg all the keys required for Google passport provider.
-        2. An instance of UserManager defined in previous section. Note the in the UserManager constructer you are required to supply the
+        1. An object of type 'GoogleKeys' class containg all the keys required for Google passport provider (clientID,clientSecret,callbackURL-e.g. /auth/google/callback  and scope string array: ["email","profile"] etc ).
+        2. An instance of UserManager defined in previous section. Note the in the UserManager constructor you are required to supply the
             key defined in your database for a unique user (e.g. email or phone number etc)
         ````js
          constructor(){
@@ -140,11 +142,11 @@ class GoogleAuthProxyRouter {
         request
             .get(callbackUrl)
             .then(async (response) =>{
-                if(response.body.loginResult && response.body.loginResult.isValid==false) {
-                    res.redirect("/#login?error=" + response.body.loginResult.error);
+                if(response.body.loginResult && response.body.isValid==false) {
+                    res.redirect("/#login?error=" + response.body.error);
                 }else{
-                    let userInfo = JSON.stringify(response.body.loginResult.userInfo)
-                    res.redirect(`/#login?access_token=${response.body.loginResult.tokenRes.token};userInfo=${userInfo}`);
+                    let userInfo = JSON.stringify(response.body.userInfo)
+                    res.redirect(`/#login?access_token=${response.body.tokenRes.token};userInfo=${userInfo}`);
                 }
 
             }).catch(err=>{
