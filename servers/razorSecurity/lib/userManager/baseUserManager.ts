@@ -29,7 +29,7 @@ export abstract class BaseUserManager implements IUserManager{
     changePassword = async (userIdentifierVal: string, oldPassword: string, newPassword: string) => {
         let user = await this.getUserByKey(userIdentifierVal)
         if (!user) {
-            throw "Failed to login. email or password are not be valid";
+            throw "Failed to login. email or password are not valid";
         }
         else {
             //compare password to hashed password
@@ -62,10 +62,16 @@ export abstract class BaseUserManager implements IUserManager{
         let userKeyVal = userInfo[this.userIdentifierField]
         let user = await this.getUserByKey(userKeyVal)
         if (user) {
+            console.log(`BaseUserManager.addUser - user ${userKeyVal} not added. Already exists in db`);
             throw new Error("User already exists in system")
         } else {
             this.hashPassword(userInfo)
-            return this.addUserToDb(userInfo);
+            return this.addUserToDb(userInfo).then(res=>{
+                console.log(`BaseUserManager.addUser - user ${userKeyVal} was added to db`);
+                return res;
+            }).catch(err=>{
+                console.error(`addUser.addUser - Failed adding user ${userKeyVal} to db. Error: ${err.message}`);
+            });
         }
     }
 
@@ -82,7 +88,7 @@ export abstract class BaseUserManager implements IUserManager{
     loginLocal = async (userNameVal: string, password): Promise<ILoginResult> => {
         let user = await this.getUserByKey(userNameVal)
         if (!user) {
-            return {isValid: false, error: "Failed to login. email or password are not be valid"};
+            return {isValid: false, error: "Failed to login. email or password are not valid"};
         }
         //compare password to hashed password
         var isPasswordCorrect = bcrypt.compareSync(password, user.password);
@@ -90,7 +96,7 @@ export abstract class BaseUserManager implements IUserManager{
             return this.createLoginResult(user)
         } else {
 
-            return {isValid: false, error: "Failed to login. email or password are not be valid"}
+            return {isValid: false, error: "Failed to login. email or password are not valid"}
         }
     }
 

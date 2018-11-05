@@ -1,0 +1,55 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-dal",
+            "type": "typescript",
+            "tsconfig": "servers\\authDal\\tsconfig.json",
+            "option": "watch",
+            "problemMatcher": [
+                "$tsc-watch"
+            ]
+        },
+        {
+            "label": "build-host",
+            "type": "typescript",
+            "tsconfig": "servers\\authHost\\tsconfig.json",
+            "option": "watch",
+            "problemMatcher": [
+                "$tsc-watch"
+            ]
+        },
+        {
+            "label": "build-auth",
+            "type": "typescript",
+            "tsconfig": "servers\\authService\\tsconfig.json",
+            "option": "watch",
+            "problemMatcher": [
+                "$tsc-watch"
+            ]
+        },
+        {
+            "label": "build-razor-sec",
+            "type": "typescript",
+            "tsconfig": "servers\\razorSecurity\\tsconfig.json",
+            "option": "watch",
+            "problemMatcher": [
+                "$tsc-watch"
+            ]
+        },
+        {
+            "label": "build-all",
+            "dependsOn": [
+                "build-razor-sec",
+                "build-auth",
+                "build-host",
+                "build-dal"
+            ],
+            "problemMatcher": [
+                "$tsc"
+            ]
+        }
+    ]
+}
