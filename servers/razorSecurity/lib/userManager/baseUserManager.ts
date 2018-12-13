@@ -113,7 +113,7 @@ export abstract class BaseUserManager implements IUserManager{
     }
 
     public createLoginResult=(dbUser:any):ILoginResult=>{
-        let token = new BearerAuthManager().createToken(this.getUserDataForToken(dbUser), "10d")
+        let token = new BearerAuthManager().createToken(this.getUserDataForToken(dbUser), this.tokenExpirationTime)
         let userInfo = this.getUserDataForDisplay(dbUser);
         return {
             isValid: true,
@@ -123,7 +123,10 @@ export abstract class BaseUserManager implements IUserManager{
     }
 
 
-
+    //returning a numeric value will translate to seconds
+    //return a string for special times such as 10d, 5h
+    //return null for never expiring tokens
+    abstract get tokenExpirationTime()
     abstract getUserDataForDisplay(dbUser:any):any;
     abstract getUserDataForToken(dbUser:any):any;
     abstract fillUserInfoFromSocialLogin(socialProviderType:string,userIdentifierVal: string, profile: any):any;

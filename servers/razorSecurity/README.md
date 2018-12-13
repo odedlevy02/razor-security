@@ -40,12 +40,13 @@ As a prerequisite start off by creating a Node host service with Express, and a 
 Now lets go into the details of the each required file
 
 - UserManager - class for managing users including creating user, login, password encription and changing password. Create 
-a UserManager class and extend it with BaseUserManager abstract class. You will be required to implement 3 methods
+a UserManager class and extend it with BaseUserManager abstract class. You will be required to implement 4 methods
     1. getUserDataForDisplay(dbUser:any):any - the input is a user from the db. The return value is an object containing user information you want to send
     to the client (e.g. for displaying 'hello Jhon')
     2. getUserDataForToken(dbUser:any):any - same input as previous method. The result is an object that is going to be encryted inside the auth token. The data can later on be deserialized in each user request.
     3. fillUserInfoFromSocialLogin(socialProviderType: string, userIdentifierVal: string, profile: any): any - This method will be called after succesfull login. 
         It will contain the additional data that is recieved from the provider so that it can be used to save user data into db. The 'socialProviderType' key will contain the type of social provider that is being used (e.g. facebook, google or local)
+    4. get tokenExpirationTime() - this is a getter method. Needs to return the expiration time of the token. returning a numeric value will translate to seconds. return a string for special times such as 10d, 5h. return null for never expiring tokens
 - googleAuthRoute (or any other provider) - Add a class and extend BaseGoogleAuthRoute. 
     1. Add a constructor and inside initialize the super class with 2 parameters
         1. An object of type 'GoogleKeys' class containg all the keys required for Google passport provider (clientID,clientSecret,callbackURL-e.g. /auth/google/callback  and scope string array: ["email","profile"] etc ).

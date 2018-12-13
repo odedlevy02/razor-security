@@ -60,13 +60,22 @@ export class BearerAuthManager {
 
     private createTokenWithExpire = (data: any, expires: string): string => {
         var key = process.env.jwt_token_secret;
-        var token = jwtToken.sign({
+        let token = null
+        if(expires){
+            token = jwtToken.sign({
                 iss: "all",
                 data: data
             }, key,
             {
                 expiresIn: expires
             });
+        }else{
+            token = jwtToken.sign({
+                iss: "all",
+                data: data
+            }, key);
+        }
+        
         return token;
     }
 
