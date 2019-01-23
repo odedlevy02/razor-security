@@ -86,7 +86,13 @@ export abstract class BaseUserManager implements IUserManager{
     }
 
     loginLocal = async (userNameVal: string, password): Promise<ILoginResult> => {
-        let user = await this.getUserByKey(userNameVal)
+        let user = null
+        try{
+            user = await this.getUserByKey(userNameVal)
+        }catch(err){
+            console.error(`BaseUserManager.loginLocal - error when calling api. Make sure that the api: ${this.getDalUrl()} is correct and the service is running`);
+            return {isValid: false, error: "Failed to login. There was an internal server error. View logs or advise with your administrator"}
+        }
         if (!user) {
             return {isValid: false, error: "Failed to login. email or password are not valid"};
         }
@@ -126,6 +132,8 @@ export abstract class BaseUserManager implements IUserManager{
 
     abstract getUserDataForDisplay(dbUser:any):any;
     abstract getUserDataForToken(dbUser:any):any;
+    //Method to be implemented by user. Will be called before saving user info to db and enables the developer to view the user info
+    //prior to saving them to the database. It is also possible to add a defaulr role before creating user
     abstract fillUserInfoFromSocialLogin(socialProviderType:string,userIdentifierVal: string, profile: any):any;
 
     private getUserByKey = (userIdentifierVal: string): Promise<IUserInfo> => {
