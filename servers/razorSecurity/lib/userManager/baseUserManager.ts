@@ -1,20 +1,20 @@
 import * as request from "superagent"
 import * as bcrypt from "bcrypt-nodejs";
-import {BearerAuthManager} from "../bearerAuthManager";
-import {IUserInfo} from "../dataModels/IUserInfo";
-import {IUserManager} from "../dataModels/IUserManager";
-import {ILoginResult} from "../dataModels/ILoginResult";
+import { BearerAuthManager } from "../bearerAuthManager";
+import { IUserInfo } from "../dataModels/IUserInfo";
+import { IUserManager } from "../dataModels/IUserManager";
+import { ILoginResult } from "../dataModels/ILoginResult";
 
-export abstract class BaseUserManager implements IUserManager{
+export abstract class BaseUserManager implements IUserManager {
 
 
-    constructor(private userIdentifierField:string){
-        if(!process.env.USER_LOOPBACK_DAL){
+    constructor(private userIdentifierField: string) {
+        if (!process.env.USER_LOOPBACK_DAL) {
             throw new Error("Env variable 'USER_LOOPBACK_DAL' is mandatory. Define the url link to loopback user table")
         }
     }
 
-    getDalUrl(){
+    getDalUrl() {
         return process.env.USER_LOOPBACK_DAL
     }
 
@@ -47,9 +47,10 @@ export abstract class BaseUserManager implements IUserManager{
 
     private updateUser = (userInfo: Partial<IUserInfo>): Promise<any> => {
         //remove password if it was sent since to update password need to call changePassword api
-        if(userInfo.password) {
+        if (userInfo.password) {
             delete userInfo.password
         }
+        this.setUserKeyToLowerCase(userInfo);
         return request.patch(this.getDalUrl()).send(userInfo).then(res => res.body);
 
     }
@@ -60,41 +61,50 @@ export abstract class BaseUserManager implements IUserManager{
             throw new Error(`user info does not include a ${this.userIdentifierField} with a value`)
         }
         let userKeyVal = userInfo[this.userIdentifierField]
+
         let user = await this.getUserByKey(userKeyVal)
         if (user) {
             console.log(`BaseUserManager.addUser - user ${userKeyVal} not added. Already exists in db`);
             throw new Error("User already exists in system")
         } else {
             this.hashPassword(userInfo)
-            return this.addUserToDb(userInfo).then(res=>{
+            return this.addUserToDb(userInfo).then(res => {
                 console.log(`BaseUserManager.addUser - user ${userKeyVal} was added to db`);
                 return res;
-            }).catch(err=>{
+            }).catch(err => {
                 console.error(`addUser.addUser - Failed adding user ${userKeyVal} to db. Error: ${err.message}`);
             });
         }
     }
 
-    private hashPassword=(userInfo: Partial<IUserInfo>)=>{
+    private hashPassword = (userInfo: Partial<IUserInfo>) => {
         if (userInfo.password) {
             userInfo.password = bcrypt.hashSync(userInfo.password)
         }
     }
 
-    private addUserToDb=(userInfo: Partial<IUserInfo>):Promise<any> =>{
+    private setUserKeyToLowerCase=(userInfo:any)=>{
+        //set the key to lower case since we do not want it to be case sensitive
+        if (typeof userInfo[this.userIdentifierField] == "string") {
+            userInfo[this.userIdentifierField] = userInfo[this.userIdentifierField].toLowerCase();
+        }
+    }
+
+    private addUserToDb = (userInfo: Partial<IUserInfo>): Promise<any> => {
+        this.setUserKeyToLowerCase(userInfo);
         return request.post(this.getDalUrl()).send(userInfo).then(res => res.body);
     }
 
     loginLocal = async (userNameVal: string, password): Promise<ILoginResult> => {
         let user = null
-        try{
+        try {
             user = await this.getUserByKey(userNameVal)
-        }catch(err){
+        } catch (err) {
             console.error(`BaseUserManager.loginLocal - error when calling api. Make sure that the api: ${this.getDalUrl()} is correct and the service is running`);
-            return {isValid: false, error: "Failed to login. There was an internal server error. View logs or advise with your administrator"}
+            return { isValid: false, error: "Failed to login. There was an internal server error. View logs or advise with your administrator" }
         }
         if (!user) {
-            return {isValid: false, error: "Failed to login. email or password are not valid"};
+            return { isValid: false, error: "Failed to login. email or password are not valid" };
         }
         //compare password to hashed password
         var isPasswordCorrect = bcrypt.compareSync(password, user.password);
@@ -102,44 +112,48 @@ export abstract class BaseUserManager implements IUserManager{
             return this.createLoginResult(user)
         } else {
 
-            return {isValid: false, error: "Failed to login. email or password are not valid"}
+            return { isValid: false, error: "Failed to login. email or password are not valid" }
         }
     }
 
     //When loging in social need to insert the user details when first time log in and later on to approve
-    loginSocial = async (socialType:string,email: string, profile: any): Promise<ILoginResult> => {
+    loginSocial = async (socialType: string, email: string, profile: any): Promise<ILoginResult> => {
         let user = await this.getUserByKey(email)
         if (!user) {//first time log in - create the new user
-            let userInfo = this.fillUserInfoFromSocialLogin(socialType,email,profile)
+            let userInfo = this.fillUserInfoFromSocialLogin(socialType, email, profile)
             user = await this.addUserToDb(userInfo)
             return this.createLoginResult(user)
-        }else{
+        } else {
             return this.createLoginResult(user)
         }
     }
 
-    public createLoginResult=(dbUser:any):ILoginResult=>{
+    public createLoginResult = (dbUser: any): ILoginResult => {
         let token = new BearerAuthManager().createToken(this.getUserDataForToken(dbUser), "10d")
         let userInfo = this.getUserDataForDisplay(dbUser);
         return {
             isValid: true,
             userInfo,
-            tokenRes: {token: token}
+            tokenRes: { token: token }
         }
     }
 
 
 
-    abstract getUserDataForDisplay(dbUser:any):any;
-    abstract getUserDataForToken(dbUser:any):any;
+    abstract getUserDataForDisplay(dbUser: any): any;
+    abstract getUserDataForToken(dbUser: any): any;
     //Method to be implemented by user. Will be called before saving user info to db and enables the developer to view the user info
     //prior to saving them to the database. It is also possible to add a defaulr role before creating user
-    abstract fillUserInfoFromSocialLogin(socialProviderType:string,userIdentifierVal: string, profile: any):any;
+    abstract fillUserInfoFromSocialLogin(socialProviderType: string, userIdentifierVal: string, profile: any): any;
 
     private getUserByKey = (userIdentifierVal: string): Promise<IUserInfo> => {
-        let filter = {where: {}}
+        let filter = { where: {} }
+        //set the key to lower case since we do not want it to be case sensitive 
+        if (typeof userIdentifierVal == "string") {
+            userIdentifierVal = userIdentifierVal.toLowerCase();
+        }
         filter.where[this.userIdentifierField] = userIdentifierVal
-        return request.get(this.getDalUrl()).send({filter}).then(res => {
+        return request.get(this.getDalUrl()).send({ filter }).then(res => {
             let users = res.body;
             if (users.length > 0) {
                 return users[0];

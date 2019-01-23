@@ -45,7 +45,7 @@ export class BaseUserManagerRouter {
         }
         else{
             this.userManager.changePassword(user,oldPassword,newPassword).then(result=>{
-                res.status(200).send({res: "New user created"})
+                res.status(200).send({res: "Password updated successfully"})
             },err=>{
                 res.status(500).send({error: err})
             })
