@@ -15,6 +15,7 @@ export class BaseUserManagerRouter {
     private createRoutes() {
         this.router.post("/addUpdateUser", this.addUpdateUser);
         this.router.post("/changePassword", this.changePassword);
+        this.router.post("/resetPassword", this.resetPassword);
         // //for test only - should be called internaly by passport
         // this.router.post("/loginLocal", this.loginLocal);
         // //for test only - should be called internaly by passport
@@ -45,6 +46,21 @@ export class BaseUserManagerRouter {
         }
         else{
             this.userManager.changePassword(user,oldPassword,newPassword).then(result=>{
+                res.status(200).send({res: "Password updated successfully"})
+            },err=>{
+                res.status(500).send({error: err})
+            })
+        }
+    }
+
+    resetPassword= (req, res, next) => {
+        let user = req.body.user || null;
+        let newPassword = req.body.newPassword || null;
+        if(!user  || ! newPassword){
+            res.status(500).send({error: "user and newPassword properties are mandatory"})
+        }
+        else{
+            this.userManager.resetPassword(user,newPassword).then(result=>{
                 res.status(200).send({res: "Password updated successfully"})
             },err=>{
                 res.status(500).send({error: err})

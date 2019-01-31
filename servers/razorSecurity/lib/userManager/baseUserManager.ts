@@ -26,6 +26,23 @@ export abstract class BaseUserManager implements IUserManager {
         }
     }
 
+    //reset password should be used only by administrators
+    //this will enable to set a new password to a user without knowing his previous password
+    resetPassword = async (userIdentifierVal: string, newPassword: string) => {
+        try {
+            let user = await this.getUserByKey(userIdentifierVal)
+            if (!user) {
+                throw "Failed to login. email or password are not valid";
+            }
+            user.password = bcrypt.hashSync(newPassword)
+            let updatedUser = await request.patch(this.getDalUrl()).send(user).then(res => res.body);
+            return { succeeded: true };
+        } catch (err) {
+            console.log("BaseUserManager.resetPassword - error when resetting ",err)
+            throw err;
+        }
+    }
+
     changePassword = async (userIdentifierVal: string, oldPassword: string, newPassword: string) => {
         let user = await this.getUserByKey(userIdentifierVal)
         if (!user) {
@@ -83,7 +100,7 @@ export abstract class BaseUserManager implements IUserManager {
         }
     }
 
-    private setUserKeyToLowerCase=(userInfo:any)=>{
+    private setUserKeyToLowerCase = (userInfo: any) => {
         //set the key to lower case since we do not want it to be case sensitive
         if (typeof userInfo[this.userIdentifierField] == "string") {
             userInfo[this.userIdentifierField] = userInfo[this.userIdentifierField].toLowerCase();
